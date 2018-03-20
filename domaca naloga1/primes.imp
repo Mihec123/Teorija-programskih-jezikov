@@ -1,0 +1,13 @@
+Count := 1 ;
+XthPrime := 2 ;
+while Count < X do
+{ if XthPrime == 2 then XthPrime := 3 else XthPrime := XthPrime + 2 ;
+  FoundFactors := 0;
+  Y := 3 ;
+  while Y*Y < XthPrime + 1 && FoundFactors == 0 do
+  { Z := 3 ;
+    while Y*Z < XthPrime do Z := Z+2 ;
+    if Y*Z == XthPrime then FoundFactors := 1 else Y := Y+2
+  } ;
+  if FoundFactors == 0 then Count := Count + 1 else skip
+}
