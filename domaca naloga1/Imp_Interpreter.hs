@@ -12,7 +12,10 @@ runImp filename s = do
     progtext <- readFile filename
     let lexed   = imp_lex progtext
         parsed  = imp_parse lexed
-        --s'      = evalCom s parsed
-      in print parsed
+        s'      = evalCom s parsed
+      in print s'
 
---runImp "file.imp" emp 
+--runImp "file.imp" emp
+-- let x = emp
+-- let y = update x "X" 5
+-- runImp "factorial.imp" y 

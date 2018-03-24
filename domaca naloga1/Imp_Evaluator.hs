@@ -84,10 +84,10 @@ evalCom state (Skip) = state
 evalCom state (Seq(exp0, exp1)) = state2
 		where state2 = evalCom (evalCom state exp0) exp1
 		
-evalCom state (Assign (exp0)) = 
-	let val0 = evalAExp state (Num (valof state (show exp0)))
+evalCom state (Assign (exp0,exp1)) = 
+	let val0 = evalAExp state exp1
 	in case val0 of
-        (n) -> update state (show exp0) n
+        (n) -> update state exp0 n
 	
 --
 -- [[DEFINE EVALUATION FUNCTIONS FOR:
