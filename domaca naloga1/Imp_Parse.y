@@ -43,7 +43,9 @@ import Imp_AbsSyntax
 
 -- precedence and associativity declarations, lowest precedence first
 
-%right ';' ':=' else
+
+%right ';'
+%right else
 %left lor
 %left land
 %nonassoc '!'
@@ -59,9 +61,12 @@ Com  : Com ';' Com	 			 {Seq ($1,$3)}
 	 | Com1						 {$1}
 	 
 Com1 : if BExp then Com else Com {Cond ($2, $4, $6)}
-	 | while BExp do '{' Com '}' {While ($2, $5)}
+	 | while BExp do Com2 		 {While ($2, $4)}
 	 | loc ':=' AExp		 	 {Assign ($1, $3)} 
 	 | skip						 {Skip}
+	 
+Com2 : Com1						 {$1}
+	 | '{' Com '}'				 {$2}
 
 
 BExp : AExp '==' AExp           {Equal ($1, $3)}

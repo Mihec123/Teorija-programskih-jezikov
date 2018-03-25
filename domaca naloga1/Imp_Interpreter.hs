@@ -18,4 +18,4 @@ runImp filename s = do
 --runImp "file.imp" emp
 -- let x = emp
 -- let y = update x "X" 5
--- runImp "factorial.imp" y 
+-- runImp "factorial.imp" y
