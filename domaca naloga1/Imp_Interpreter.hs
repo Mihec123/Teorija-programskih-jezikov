@@ -7,7 +7,7 @@ import Imp_Evaluator
 --
 -- lexes and parses the Imp program text in file.imp and then
 -- executes it starting in state s
-		
+
 runImp filename s = do
     progtext <- readFile filename
     let lexed   = imp_lex progtext

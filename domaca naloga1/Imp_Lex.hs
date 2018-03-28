@@ -35,7 +35,7 @@ import Array
 
 
 {-# LINE 9 "<command-line>" #-}
-{-# LINE 1 "C:\\Users\\randy\\AppData\\Local\\Temp\\ghc4700_0\\ghc_2.h" #-}
+{-# LINE 1 "C:\\Users\\randy\\AppData\\Local\\Temp\\ghc1376_0\\ghc_2.h" #-}
 
 
 
@@ -2957,7 +2957,7 @@ data Token = KEY String
     | NUM Integer
     | LOC String
     | ASS String
-	deriving Show
+    deriving Show
 
 -- The lexer implements a function
 --
@@ -2997,7 +2997,7 @@ alex_action_8 = \s -> OP s
 
 
 {-# LINE 8 "<command-line>" #-}
-{-# LINE 1 "C:\\Users\\randy\\AppData\\Local\\Temp\\ghc4708_0\\ghc_2.h" #-}
+{-# LINE 1 "C:\\Users\\randy\\AppData\\Local\\Temp\\ghc11084_0\\ghc_2.h" #-}
 
 
 

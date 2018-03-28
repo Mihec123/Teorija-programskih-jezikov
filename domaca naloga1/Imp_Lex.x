@@ -5,9 +5,9 @@
 
 -- character classes
 
-$digit		= [0-9]
+$digit      = [0-9]
 $lower      = [a-z]
-$upper   	= [A-Z]
+$upper      = [A-Z]
 $symb       = [\!\@\#\$\%\^\&\-\+\=\/\<\>\~\:\;\.\?\/\\\~\'\|]
 
 :-
@@ -16,12 +16,12 @@ $symb       = [\!\@\#\$\%\^\&\-\+\=\/\<\>\~\:\;\.\?\/\\\~\'\|]
 
    $white+                                               ;   -- whitespace
    \-[\-]+([^$symb].*)?                                  ;   -- comments
-   $upper[$upper $lower $digit]*						 {\s -> LOC s}
+   $upper[$upper $lower $digit]*                         {\s -> LOC s}
    $digit+                                               {\s -> NUM (read s)}
-   \:\=												 	 {\s -> ASS s}
-   \; | \( | \) | \{ | \}								 {\s -> PUNC s}
+   \:\=                                                  {\s -> ASS s}
+   \; | \( | \) | \{ | \}                                {\s -> PUNC s}
    True | False                                          {\s -> BOOLEAN (read s)}
-   if | then | else | while | do | skip					 {\s -> KEY s}
+   if | then | else | while | do | skip                  {\s -> KEY s}
    \=\= | \< | \+ | \- | \* | \&\& | \|\| | \!:          {\s -> OP s}
    
 
@@ -37,7 +37,7 @@ data Token = KEY String
     | NUM Integer
     | LOC String
     | ASS String
-	deriving Show
+    deriving Show
 
 -- The lexer implements a function
 --
