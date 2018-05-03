@@ -5,23 +5,7 @@ import TMH_TypeEnvironments
 
 --------------------------------------------------------------------------
 
-freshmvariable :: TypeEnv -> Exp ->[String] -> String ->Maybe Type
-
--- freshmvariable tenv exp bs freshtypevariable
--- Performs a substitution of polymorphic types for monomorphic types for the expression exp
--- if such substitution is needed. As an argument we give a freshtvar
-
-freshmvariable tenv (Var x) bs new =
-  do t <- lookup x tenv
-     let p = polyTypeVars t	 
-     case p of [] -> Just t; _ -> Just (TypeVar new)
-
-	 
-fromJust :: Maybe a -> a
-fromJust (Just a) = a
-fromJust Nothing = error "Oops, you goofed up, fool."
-
-inferType :: TypeEnv -> Exp -> [String] -> Maybe (TypeSubst, Type, [String])	 
+inferType :: TypeEnv -> Exp -> [String] -> Maybe (TypeSubst, Type, [String])
 
 -- inferType tenv exp bs
 --
@@ -30,11 +14,9 @@ inferType :: TypeEnv -> Exp -> [String] -> Maybe (TypeSubst, Type, [String])
 ---- Returns a triple (s, t, bs') where t is inferred type, s is accompanying 
 ---- type substitution and bs' is all variables used by end of type inference
 
-
-inferType tenv (Var x) bs = do
-  let new = freshtvar bs
-  let t' = freshmvariable tenv (Var x) bs new
-  return ([],fromJust t',new:bs)
+inferType tenv (Var x) bs =
+  do t <- lookup x tenv
+     return ([], t, bs)
 
 inferType tenv (Num n) bs = Just ([], TypeConst "Integer", bs)
 
