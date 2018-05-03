@@ -5,11 +5,6 @@ import TMH_TypeEnvironments
 
 --------------------------------------------------------------------------
 
-changelist list list1= 
-	case list of [] -> list; x:xs -> (freshtvar list1):(changelist xs ((freshtvar list1):xs) )
-
-append l1 l2 = case l1 of [] -> l2 ; x:xs -> x : (append xs l2) ;
-
 inferType :: TypeEnv -> Exp -> [String] -> Maybe (TypeSubst, Type, [String])
 
 -- inferType tenv exp bs
@@ -19,12 +14,9 @@ inferType :: TypeEnv -> Exp -> [String] -> Maybe (TypeSubst, Type, [String])
 ---- Returns a triple (s, t, bs') where t is inferred type, s is accompanying 
 ---- type substitution and bs' is all variables used by end of type inference
 
-
 inferType tenv (Var x) bs =
   do t <- lookup x tenv
-     let p = polyTypeVars t
-     let m = typeVars t
-     return ([],t,append (changelist p p) bs)
+     return ([], t, bs)
 
 inferType tenv (Num n) bs = Just ([], TypeConst "Integer", bs)
 
