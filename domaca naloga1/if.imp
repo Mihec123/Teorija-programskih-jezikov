@@ -1,0 +1,3 @@
+XthPrime := 2 ;
+if XthPrime == 2 then XthPrime := 3 else XthPrime := XthPrime + 2 ;
+G := 1
