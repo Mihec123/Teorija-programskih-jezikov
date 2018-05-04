@@ -13,13 +13,53 @@ freshmvariable :: TypeEnv -> Exp ->[String] -> String ->Maybe Type
 
 freshmvariable tenv (Var x) bs new =
   do t <- lookup x tenv
-     let p = polyTypeVars t	 
+     let p = polyTypeVars t	
      case p of [] -> Just t; _ -> Just (TypeVar new)
 
 	 
 fromJust :: Maybe a -> a
 fromJust (Just a) = a
 fromJust Nothing = error "Oops, you goofed up, fool."
+
+
+second:: (a,b) -> b
+second (x,y) = y
+
+append l1 l2 = case l1 of [] -> l2 ; x:xs -> x : (append xs l2) ;
+
+typeVarsIn :: [Type] -> [String] -> [String]
+typeVarsIn tenv all =
+  case tenv of [] -> all; x:xs -> typeVarsIn xs (append (typeVars x) all) 
+
+substMonForPol:: TypeEnv -> Type -> [String] -> Maybe(Type,[String])
+substMonForPol tenv (TypeVar a) bs = do
+  if (not (elem (TypeVar a) (map second tenv))) && (elem a (typeVars (TypeVar a)))
+     then
+        return ((TypeVar (freshptvar bs)),((freshptvar bs):bs))
+     else
+        return ((TypeVar a),bs)
+        -- let t = (freshptvar bs)
+        -- let bs' = (t:bs)
+     -- else
+        -- let t = a
+        -- let bs' = bs
+    -- return ((TypeVar a),bs)
+
+substMonForPol tenv (TypeConst a) bs = Just ((TypeConst a),bs)
+substMonForPol tenv (Arrow (type1, type2)) bs = do
+     (t1,bs1) <- substMonForPol tenv type1 bs
+     (t2,bs2) <- substMonForPol tenv type2 bs1
+     return (Arrow (t1,t2), bs2)
+substMonForPol tenv (Myb type1) bs = do
+     (t,bs1) <- substMonForPol tenv type1 bs
+     return (Myb t,bs1)
+substMonForPol tenv (List type1) bs = do
+     (t,bs1) <- substMonForPol tenv type1 bs 
+     return (List t,bs1)
+substMonForPol tenv (Tree type1) bs = do
+     (t,bs1) <- substMonForPol tenv type1 bs 
+     return (Tree t,bs1)
+  
 
 inferType :: TypeEnv -> Exp -> [String] -> Maybe (TypeSubst, Type, [String])	 
 
@@ -103,6 +143,19 @@ inferType tenv (Lam (x, exp0)) bs =
      (s0, t0, bs0) <- inferType tenv' exp0 (b:bs)
      return (restrict s0 (tvarsTEnv tenv), Arrow (typeSubst (TypeVar b) s0, t0), bs0)
 
+-- inferType tenv (Let(x, exp1, exp2)) bs =
+  -- do let b = freshtvar bs
+         -- tenv1 = updateTEnv tenv x (TypeVar b)
+     -- (s1, t1, bs1) <- inferType tenv1 exp1 (b:bs)
+     -- let t1' = typeSubst (TypeVar b) s1
+     -- s1' <- mgu t1' t1
+     -- let t1'' = typeSubst t1' s1'
+         -- tenv' = typeSubstTEnv (typeSubstTEnv tenv s1) s1'
+         -- tenv2 = updateTEnv tenv' x t1''
+     -- (s2, t2, bs2) <- inferType tenv2 exp2 bs1
+     -- let s = composeSubstList [s1,s1',s2]
+     -- return (restrict s (tvarsTEnv tenv), t2, bs2)
+	 
 inferType tenv (Let(x, exp1, exp2)) bs =
   do let b = freshtvar bs
          tenv1 = updateTEnv tenv x (TypeVar b)
@@ -111,10 +164,12 @@ inferType tenv (Let(x, exp1, exp2)) bs =
      s1' <- mgu t1' t1
      let t1'' = typeSubst t1' s1'
          tenv' = typeSubstTEnv (typeSubstTEnv tenv s1) s1'
-         tenv2 = updateTEnv tenv' x t1''
-     (s2, t2, bs2) <- inferType tenv2 exp2 bs1
+     (t1p,bs1') <- substMonForPol tenv' t1'' bs1
+     let tenv2 = updateTEnv tenv x t1p
+     (s2,t2,bs2) <- inferType tenv2 exp2 bs1'
      let s = composeSubstList [s1,s1',s2]
      return (restrict s (tvarsTEnv tenv), t2, bs2)
+
 
 inferType tenv Jst bs =
   do let b = freshtvar bs
