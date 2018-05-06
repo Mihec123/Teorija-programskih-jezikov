@@ -84,10 +84,14 @@ evaluate env (ListCase (exp0, exp1, y, z, exp2)) =
     Cons(exp0hd, exp0tl) -> evaluate env (parExpsubst exp2 [y,z] [exp0hd,exp0tl])
     _ -> error "Runtime type error"
 
+
+--evaluateon of a leaf ina tree
 evaluate env Leaf = Leaf
 
+-- evaluation of a node
 evaluate env Node = Node
 
+-- evaluation of a tree in the form tree x y z
 evaluate env (TreeCase (exp0, exp1, x, y, z, exp2)) =
   case evaluate env exp0 of
     Leaf -> evaluate env exp1

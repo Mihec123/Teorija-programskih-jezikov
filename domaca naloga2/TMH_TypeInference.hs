@@ -5,60 +5,45 @@ import TMH_TypeEnvironments
 
 --------------------------------------------------------------------------
 
-freshmvariable :: TypeEnv -> Exp ->[String] -> String ->Maybe Type
 
--- freshmvariable tenv exp bs freshtypevariable
--- Performs a substitution of polymorphic types for monomorphic types for the expression exp
--- if such substitution is needed. As an argument we give a freshtvar
-
-freshmvariable tenv (Var x) bs new =
-  do t <- lookup x tenv
-     let p = polyTypeVars t	
-     case p of [] -> Just t; _ -> Just (TypeVar new)
+--test
+-- twice
+--twice:: Arrow(Arrow(TypeVar "b0",TypeVar "b0"),Arrow(TypeVar "b0",TypeVar "b0"))
+-- Lam ("f", Lam ("x", Op ("appl", Var "f", Op ("appl", Var "f", Var "x"))))
+--typeenv = [("twice",Arrow (Arrow (TypeVar "b2",TypeVar "b2"),Arrow (TypeVar "b2",TypeVar "b2")))]
+-- fourtimes Op ("appl", Var "twice", Var "twice")
 
 	 
-fromJust :: Maybe a -> a
-fromJust (Just a) = a
-fromJust Nothing = error "Oops, you goofed up, fool."
-
-
+listtosub :: [String] -> [String] ->TypeSubst-> (TypeSubst,[String])
+-- takes list of polymorphic variables and turns them to a substitution of polymorphic for monomorphic
+listtosub p bs spremembe =
+     case p of [] -> (spremembe,bs); x:xs ->  listtosub xs ((freshtvar bs):bs) ((x,(TypeVar (freshtvar bs))):spremembe)
+	 
+substPolForMon :: Type -> [String] -> Maybe (Type,[String])
+substPolForMon t bs = do
+    let p = polyTypeVars t
+    let (s1,bs1) = listtosub p bs []
+    let t1 = typeSubst t s1
+    return (t1,bs1)
+	
 second:: (a,b) -> b
+--returns second element of a tuple
 second (x,y) = y
 
-append l1 l2 = case l1 of [] -> l2 ; x:xs -> x : (append xs l2) ;
-
-typeVarsIn :: [Type] -> [String] -> [String]
-typeVarsIn tenv all =
-  case tenv of [] -> all; x:xs -> typeVarsIn xs (append (typeVars x) all) 
-
-substMonForPol:: TypeEnv -> Type -> [String] -> Maybe(Type,[String])
-substMonForPol tenv (TypeVar a) bs = do
-  if (not (elem (TypeVar a) (map second tenv))) && (elem a (typeVars (TypeVar a)))
+listtosub1 :: [String] -> [String] ->TypeSubst-> (TypeSubst,[String])
+-- takes list of monomorphic variables and turns them to a substitution of monomorphic for polymorphic
+listtosub1 m bs spremembe =
+     case m of [] -> (spremembe,bs); x:xs ->  listtosub1 xs ((freshptvar bs):bs) ((x,(TypeVar (freshptvar bs))):spremembe)
+	 
+--substMonForPol :: Type -> [String] -> Maybe (Type,[String])
+substMonForPol tenv t bs = do
+  let m = (typeVars t)
+  let (s1,bs1) = listtosub1 m bs []
+  if (not (elem t (map second tenv))) && (not (m == []))
      then
-        return ((TypeVar (freshptvar bs)),((freshptvar bs):bs))
+        return (typeSubst t s1,bs1)
      else
-        return ((TypeVar a),bs)
-        -- let t = (freshptvar bs)
-        -- let bs' = (t:bs)
-     -- else
-        -- let t = a
-        -- let bs' = bs
-    -- return ((TypeVar a),bs)
-
-substMonForPol tenv (TypeConst a) bs = Just ((TypeConst a),bs)
-substMonForPol tenv (Arrow (type1, type2)) bs = do
-     (t1,bs1) <- substMonForPol tenv type1 bs
-     (t2,bs2) <- substMonForPol tenv type2 bs1
-     return (Arrow (t1,t2), bs2)
-substMonForPol tenv (Myb type1) bs = do
-     (t,bs1) <- substMonForPol tenv type1 bs
-     return (Myb t,bs1)
-substMonForPol tenv (List type1) bs = do
-     (t,bs1) <- substMonForPol tenv type1 bs 
-     return (List t,bs1)
-substMonForPol tenv (Tree type1) bs = do
-     (t,bs1) <- substMonForPol tenv type1 bs 
-     return (Tree t,bs1)
+        return (t,bs)
   
 
 inferType :: TypeEnv -> Exp -> [String] -> Maybe (TypeSubst, Type, [String])	 
@@ -66,15 +51,15 @@ inferType :: TypeEnv -> Exp -> [String] -> Maybe (TypeSubst, Type, [String])
 -- inferType tenv exp bs
 --
 ---- Performs type inference for expression exp in type environment tenv,
----- where bs is a list of monomorphic type variables in use already.
+---- where bs is a list of monomorphic typ:t e variables in use already.
 ---- Returns a triple (s, t, bs') where t is inferred type, s is accompanying 
 ---- type substitution and bs' is all variables used by end of type inference
 
-
+--infer type for polimorphic variables
 inferType tenv (Var x) bs = do
-  let new = freshtvar bs
-  let t' = freshmvariable tenv (Var x) bs new
-  return ([],fromJust t',new:bs)
+  t <- lookup x tenv
+  (t1,bs1) <- substPolForMon t bs
+  return ([],t1,bs1)
 
 inferType tenv (Num n) bs = Just ([], TypeConst "Integer", bs)
 
@@ -143,19 +128,7 @@ inferType tenv (Lam (x, exp0)) bs =
      (s0, t0, bs0) <- inferType tenv' exp0 (b:bs)
      return (restrict s0 (tvarsTEnv tenv), Arrow (typeSubst (TypeVar b) s0, t0), bs0)
 
--- inferType tenv (Let(x, exp1, exp2)) bs =
-  -- do let b = freshtvar bs
-         -- tenv1 = updateTEnv tenv x (TypeVar b)
-     -- (s1, t1, bs1) <- inferType tenv1 exp1 (b:bs)
-     -- let t1' = typeSubst (TypeVar b) s1
-     -- s1' <- mgu t1' t1
-     -- let t1'' = typeSubst t1' s1'
-         -- tenv' = typeSubstTEnv (typeSubstTEnv tenv s1) s1'
-         -- tenv2 = updateTEnv tenv' x t1''
-     -- (s2, t2, bs2) <- inferType tenv2 exp2 bs1
-     -- let s = composeSubstList [s1,s1',s2]
-     -- return (restrict s (tvarsTEnv tenv), t2, bs2)
-	 
+--follows the rules for polimorphic let type inference 
 inferType tenv (Let(x, exp1, exp2)) bs =
   do let b = freshtvar bs
          tenv1 = updateTEnv tenv x (TypeVar b)
@@ -169,6 +142,7 @@ inferType tenv (Let(x, exp1, exp2)) bs =
      (s2,t2,bs2) <- inferType tenv2 exp2 bs1'
      let s = composeSubstList [s1,s1',s2]
      return (restrict s (tvarsTEnv tenv), t2, bs2)
+	 
 
 
 inferType tenv Jst bs =
@@ -228,7 +202,7 @@ inferType tenv Node bs =
   do let b = freshtvar bs
      return ([], Arrow (TypeVar b, Arrow (Tree (TypeVar b), Arrow (Tree (TypeVar b), Tree (TypeVar b)))), b:bs)
 
-
+--inferType tenv (TreeCase (exp1, exp2, x, y, z, exp3)) bs follows the rules for infering types for binomial trees 
 inferType tenv (TreeCase (exp1, exp2, x, y, z, exp3)) bs =
   do (s1, t1, bs1) <- inferType tenv exp1 bs
      let b = freshtvar bs1
@@ -269,10 +243,13 @@ doInferProg :: [String] -> Env -> TypeEnv -> Maybe TypeEnv
 ---- for all the variable declarations in xs and, if successful, returns a
 ---- type environment extending tenv.
 
-doInferProg [] _  tenv  = Just tenv
+doInferProg [] _  tenv = Just tenv
 
+
+-- does the same thing as the monomorphic doInferprog with the change of bs being a collection of
+-- polimorphic varibles and chnging the type from monomorphic to polymorphic variables at the end
 doInferProg (x:xs) env tenv =
-  do let bs = tvarsTEnv tenv
+  do let bs = tvarspTEnv tenv
          b = freshtvar bs
 	 tenv1 = updateTEnv tenv x (TypeVar b)
      (s1, t1, bs') <- inferType tenv1 (env x) (b:bs)
@@ -280,7 +257,37 @@ doInferProg (x:xs) env tenv =
      s1' <- mgu t1' t1
      let t1'' = typeSubst t1' s1'
          tenv' = typeSubstTEnv (typeSubstTEnv tenv s1) s1'
-         tenv2 = updateTEnv tenv' x t1''
+         temp = substMonForPol1 t1'' bs'
+         t1''' = fromjusttofirst temp
+         bs'' = fromjusttosecond temp
+         tenv2 = updateTEnv tenv' x t1'''
      doInferProg xs env tenv2
+	 
+tvarspTEnv tenv = concat [polyTypeVars t | (_,t) <- tenv]
+  -- all polimorphic type variables in type environment tenv	 
+
+
+substMonForPol1 :: Type -> [String] -> Maybe (Type,[String])
+--substitutes all monomorphic variable for fresh polimorphic variables
+substMonForPol1 t bs = do
+  let m = (typeVars t)
+  let (s1,bs1) = listtosub1 m bs []
+  if (not (m == []))
+     then
+        return (typeSubst t s1,bs1)
+     else
+        return (t,bs)
+
+fromjusttofirst:: Maybe (a,b) -> a
+--returns the frist variable of a just tuple
+fromjusttofirst (Just (a,b)) = a
+fromjusttosecond:: Maybe (a,b) -> b
+--returns the second variable of a just tuple
+fromjusttosecond (Just (a,b)) = b
+
+	 
+
+	 
+
 
 
