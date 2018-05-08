@@ -9,8 +9,9 @@ twice f x = f (f x) ;
 
 fourtimes = twice twice ;
 
+eigth = fourtimes fourtimes;
 
--- a more complex example
+--a more complex example
 
 
 odd n = if n == 0 then False
@@ -31,13 +32,15 @@ maptree f t = case t of Leaf -> Leaf ;
                         Node x t1 t2 -> Node (f x) (maptree f t1) (maptree f t2) ;
 
 subtrees t = case t of Leaf -> Leaf ;
-                       Node x t1 t2 -> Node (Node x t1 t2) (subtrees t1) (subtrees t2) ;
+                       Node x t1 t2 -> Node (Node x t1 t2) (subtrees t1) (subtrees t2) ;					   
 
 append l1 l2 = case l1 of [] -> l2 ; x:xs -> x : (append xs l2) ;
 
 traverse t = case t of Leaf -> [] ;
                        Node x t1 t2 -> x : (append (traverse t1) (traverse t2)) ;
 
+
+					   
 list2 = traverse (maptree greatest (maptree (path odd) (subtrees (build 1 6)))) ;
 
 
